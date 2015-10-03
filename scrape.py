@@ -9,12 +9,16 @@ import os
 import re
 import csv
 import sys
+import datetime
 
 def parse_html(url):
 	req = urllib2.Request(url)
 	response = urllib2.urlopen(req)
 	content = response.read()
 	return BeautifulSoup(content, "html.parser")
+
+def get_current_date_string():
+	return datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
 
 def get_images(site):
 	media = site.find("div","media")
@@ -37,26 +41,32 @@ def get_all_attr(elementList, attr):
 	return [a[attr] for a in elementList]
 
 def get_tags(site):
-	return [a.text for a in site.find("dl","tags").find_all("a")]
+	tags = site.find("dl","tags")
+	if tags:
+		return [a.text for a in tags.find_all("a")]
+	else:
+		return []
 
-
-output_file = open("collecteddata.csv", 'wb')
+output_file = open("collecteddata_"+get_current_date_string()+".csv", 'wb')
 output = csv.writer(output_file)
-output.writerow(["URL", "Text", "Links", "Image URLS", "Image Alt Text"])
+output.writerow(["URL", "Text", "Links", "Image URLS", "Image Alt Text","Tags"])
 
 for line in open("urllist.txt", 'r'):	
 	try:
 		site = parse_html(line)
 		copy = get_copy(site)
-		copyText = convert_to_plain_text(copy)
-		copyLinksHref = get_all_attr(copy.find_all("a"), "href")
-
+		copyText = ""
+		copyLinksHref = []
+		if copy:
+			copyText = convert_to_plain_text(copy)
+			copyLinksHref = get_all_attr(copy.find_all("a"), "href")
+		tags = get_tags(site)
 		images = get_images(site)
 		if images:
 			imagesSrc = get_all_attr(images, "src")
 			imagesAlt = get_all_attr(images, "alt")
 
-		data = [line, copyText, copyLinksHref, imagesSrc, imagesAlt]
+		data = [line, copyText, copyLinksHref, imagesSrc, imagesAlt,tags]
 		output.writerow([unicode(s).encode("utf-8") for s in data])
 
 		print(line)
