@@ -97,19 +97,38 @@ def create_csv_with_metadata():
 
 	output_file.close()
 
-#create_csv_with_metadata()
 
-lineNumber = 0
-for line in open("urllist.txt", 'r'):
-	site = parse_html(line)
-	images = get_images(site)
-	imageNumber = 0
-	if images:
-		imagesSrc = get_all_attr(images, "src")
-		for src in imagesSrc:
-			fileExtension = src[src.rfind("."):]
-			fileName =  "post"+str(lineNumber)+"_image"+str(imageNumber) + fileExtension
-			download_photo(src, fileName)
-			imageNumber += 1
-	lineNumber +=1
+## THREADS DATA
+'''
+f = open("threads.csv","wb")
+output = csv.writer(f)
+
+for i in range(1,226):
+	site = parse_html("https://scratch.mit.edu/discuss/10/?page="+str(i))
+	threads = site.find_all("tr")
+	currentIter = 0
+	for thread in threads[1:]:
+		link = thread.find("h3","topic_isread").find("a").attrs["href"]
+		title = thread.find("h3","topic_isread").find("a").text
+		user = thread.find("span","byuser").text[3:]
+		replies = site.find_all("td","tc2")[currentIter].text
+		views = site.find_all("td","tc3")[currentIter].text
+		lr =  site.find_all("td","tcr")[currentIter]
+		lastresponse = lr.find("a").text
+		lastresponder = lr.find("span","byuser").text[3:]
+		data = [link,title,user,replies,views,lastresponse,lastresponder]
+		output.writerow([unicode(s).encode("utf-8") for s in data])
+		currentIter += 1
+	print(i)
+
+f.close()
+'''
+
+## THREADS DATA
+
+threads = []
+with open('threads.csv', 'rb') as f:
+    reader = csv.reader(f)
+    for row in reader:
+    	threads.append(row[0])
 
